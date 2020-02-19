@@ -38,13 +38,14 @@ copyIcon()
 {
 	icon="$1"
 	count=`find /usr/share/icons -iname "$icon.*"`
-	echo $count
 	if [[ -n $count ]]
 	then
-		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(256x256|128x128|64x64|scalable)\/(apps|devices)/$icon.*" -print|head -n 1`
+		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(256x256|192x192|128x128|72x72|64x64|48x48|36x36|32x32|scalable)\/(apps|devices)/$icon.*" -print|head -n 1`
+		echo $original
 		destination="$2"
-		$(convert -size 48x48 "$original" "$destination/$icon.png")
-		fi
+		$(convert "$original" -size 48x48 -background none "$destination/$icon.png")
+
+	fi
 }
 
 createPLIST()
@@ -135,7 +136,6 @@ then
 	echo "The required parameters are missing!"
 	printHelp	
 else
-	`rm -rf $outputDir\/*`
+	`rm -rf $outputDir/*`
 	GenerateApps
-	exit 1;
 	fi
