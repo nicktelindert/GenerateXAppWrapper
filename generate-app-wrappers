@@ -37,10 +37,14 @@ createAppFolder()
 copyIcon()
 {
 	icon="$1"
-	original=$(find /usr/share/icons -regex ".*\/apps/$icon.*" -print | head -n 1)
-	destination="$2"
-	$(cp "$original" "$destination")
-
+	count=`find /usr/share/icons -iname "$icon.*"`
+	echo $count
+	if [[ -n $count ]]
+	then
+		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(256x256|128x128|64x64|scalable)\/(apps|devices)/$icon.*" -print|head -n 1`
+		destination="$2"
+		$(convert -size 48x48 "$original" "$destination/$icon.png")
+		fi
 }
 
 createPLIST()
@@ -51,7 +55,7 @@ createPLIST()
 
 	resourcesDir="Resources"
 	plist="$resourcesDir/Info-gnustep.plist"
-	$(touch "$plist")
+	`touch "$plist"`
 	echo "{" >> $plist
 	echo "NSExecutable = \"$icon\";" >> $plist
 	echo "NSIcon = \"$icon.png\";" >> $plist
@@ -131,6 +135,7 @@ then
 	echo "The required parameters are missing!"
 	printHelp	
 else
+	`rm -rf $outputDir\/*`
 	GenerateApps
 	exit 1;
 	fi
