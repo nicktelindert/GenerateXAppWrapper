@@ -136,6 +136,5 @@ then
 	echo "The required parameters are missing!"
 	printHelp	
 else
-	`rm -rf $outputDir/*`
 	GenerateApps
 	fi
