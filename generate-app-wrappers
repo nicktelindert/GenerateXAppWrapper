@@ -40,10 +40,10 @@ copyIcon()
 	count=`find /usr/share/icons -iname "$icon.*"`
 	if [[ -n $count ]]; then
 		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(256x256|192x192|128x128|72x72|64x64|48x48|36x36|32x32|scalable)\/(apps|devices)/$icon.*" -print|head -n 1`
-		echo $original
 		destination="$2"
-		$(convert "$original" -size 48x48 -background none "$destination/$icon.tiff")
-
+		if [ $original ]; then
+			$(convert "$original" -size 48x48 -background none "$destination/$icon.tiff")
+		fi
 	fi
 }
 
@@ -92,7 +92,7 @@ GenerateApps()
 	cd $inputDir
 	DESKTOPFILES="$inputDir/*.desktop"
 	for f in $DESKTOPFILES; do
-		properties="Name\[`echo $LC_MESSAGES`\]=,Exec=,Icon="
+		properties="Name=,Exec=,Icon="
 		Field_Separator=$IFS
 		noDisplay="$(grep -w 'NoDisplay=true' $f)"
 		isTerminal="$(grep -w 'Terminal=true' $f)"
@@ -101,12 +101,6 @@ GenerateApps()
 			IFS=,
 			for prop in $properties; do
 				rawVariable="$(grep -m1 ^$prop $f)"
-				echo $rawVariable
-				echo $prop
-				if [ -z $rawVariable ]; then
-					prop=`echo $prop | sed "s/\[.*\]//"`
-					rawVariable="$(grep -m1 ^$prop $f)"
-				fi
 				applicationdata[$INDEX]=`echo ${rawVariable#$prop}`
 				((INDEX++))
 			done
