@@ -1,4 +1,4 @@
-#!/bin/bash -
+#!/bin/bash -u
 # Name: GenerateAppWrappers
 # Description: Create App wrapppers for GNUstep/NextSpace
 # Author: Nick te Lindert
@@ -24,8 +24,8 @@ createAppFolder()
 	icon=$2
 	executable=$3;
 	appDir="$outputDir/$name"
-	rm -rf "$appDir"
-	mkdir "$appDir"
+	`rm -rf "$appDir"`
+	`mkdir "$appDir"`
 	cd "$appDir"
 	mkdir "Resources"
 	createExecutable "$icon" "$executable"
@@ -38,12 +38,11 @@ copyIcon()
 {
 	icon="$1"
 	count=`find /usr/share/icons -iname "$icon.*"`
-	if [[ -n $count ]]
-	then
+	if [[ -n $count ]]; then
 		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(256x256|192x192|128x128|72x72|64x64|48x48|36x36|32x32|scalable)\/(apps|devices)/$icon.*" -print|head -n 1`
 		echo $original
 		destination="$2"
-		$(convert "$original" -size 48x48 -background none "$destination/$icon.png")
+		$(convert "$original" -size 48x48 -background none "$destination/$icon.tiff")
 
 	fi
 }
@@ -59,26 +58,30 @@ createPLIST()
 	`touch "$plist"`
 	echo "{" >> $plist
 	echo "NSExecutable = \"$icon\";" >> $plist
-	echo "NSIcon = \"$icon.png\";" >> $plist
+	echo "NSIcon = \"$icon.tiff\";" >> $plist
 	echo "xAppWrapper = YES;" >> $plist
 	echo "}" >> $plist
-
-
+	`indent $plist`
 }
 
 
 createExecutable()
 {
 	executableName=$1
- 	executeFile=$2	
+	executeFile=$2
+	parameterFilter=" --*"	
+	executeFile=${executeFile%%$parameterFilter}
+	echo $executeFile
+	parametermatch="\$#"
+	parameters="\$2"
 	echo $executableName
 	$(touch "$executableName")
 	chmod a+x $executableName
-	echo "#!/bin/sh" >> $executableName;
+	echo "#!/bin/sh" >> $executableName
 	echo "" >> $executableName;
-	echo "APP=$executeFile" >> $executableName;
+	echo "APP=\"$executeFile\"" >> $executableName
 	echo "" >> $executableName;
-	echo "\$APP &" >> $executableName;
+	echo "\$APP &" >> $executableName
 }
 
 
@@ -88,31 +91,33 @@ GenerateApps()
 	echo "Reading .Desktop files from: $inputDir"
 	cd $inputDir
 	DESKTOPFILES="$inputDir/*.desktop"
-	for f in $DESKTOPFILES
-	do
-		properties="Name=,Exec=,Icon="
+	for f in $DESKTOPFILES; do
+		properties="Name\[`echo $LC_MESSAGES`\]=,Exec=,Icon="
 		Field_Separator=$IFS
-		noDisplay="$(grep 'NoDisplay=true' $f)"
-		isTerminal="$(grep 'Terminal=true' $f)"
-		if [ -z $isTerminal ] && [ -z $noDisplay ]
-		then
+		noDisplay="$(grep -w 'NoDisplay=true' $f)"
+		isTerminal="$(grep -w 'Terminal=true' $f)"
+		if [ -z $isTerminal ] && [ -z $noDisplay ]; then
 			INDEX=0
 			IFS=,
-			for prop in $properties
-			do
-				rawVariable="$(grep -m1 $prop $f)"
+			for prop in $properties; do
+				rawVariable="$(grep -m1 ^$prop $f)"
+				echo $rawVariable
+				echo $prop
+				if [ -z $rawVariable ]; then
+					prop=`echo $prop | sed "s/\[.*\]//"`
+					rawVariable="$(grep -m1 ^$prop $f)"
+				fi
 				applicationdata[$INDEX]=`echo ${rawVariable#$prop}`
 				((INDEX++))
 			done
 			IFS=$Field_Separator
 			name=${applicationdata[0]}
-			executable=${applicationdata[1]%\%*}
-			executable=${executable% --*}
-			echo $executable
+			executable=${applicationdata[1]% -*}
+			removeParameter=" %"
+			executable=${executable%$removeParameter*}
 			icon=${applicationdata[2]}
-			if [[ -n $name ]] && [[ -n $icon ]] && [[ -n $executable ]]
-			then
-			createAppFolder "$name.app" "$icon" "$executable" "$f"	
+			if [[ -n $name ]] && [[ -n $icon ]] && [[ -n $executable ]]; then
+				createAppFolder "$name.app" "$icon" "$executable" "$f"	
 			fi
 			fi
 		done
@@ -122,8 +127,9 @@ GenerateApps()
 
 
 #Main loop
-while getopts "i:o:" opt
-do
+inputDir=""
+outputDir=""
+while getopts "i:o:" opt; do
 	case $opt in
 		i ) inputDir=$OPTARG ;;
 		o ) outputDir=$OPTARG ;;
@@ -131,10 +137,9 @@ do
 	esac
 done
 
-if [ -z "$inputDir" ] || [ -z "$outputDir" ]
-then
+if [ -z "$inputDir" ] || [ -z "$outputDir" ]; then
 	echo "The required parameters are missing!"
 	printHelp	
 else
 	GenerateApps
-	fi
+fi
