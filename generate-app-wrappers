@@ -37,13 +37,12 @@ createAppFolder()
 copyIcon()
 {
 	icon="$1"
-	count=`find /usr/share/icons -iname "$icon.*"`
-	if [[ -n $count ]]; then
-		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(256x256|192x192|128x128|72x72|64x64|48x48|scalable)\/(apps|devices)/$icon.*" -print|head -n 1`
-		destination="$2"
-		if [ $original ]; then
-			$(convert "$original" -resize 48x48 -background none "$destination/$icon.tiff")
-		fi
+	original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(scalable|512x512|256x256|192x192|128x128|96x96|72x72|64x64|48x48)\/(apps|devices)/$icon.(svg|png|xpm)" -print|head -n 1`
+	destination="$2"
+	echo $original
+	echo $icon	
+	if [[ -f "$original" ]]; then
+		$(convert "$original" -resize 48x48 -background none "$destination/$icon.tiff")
 	fi
 }
 
@@ -71,10 +70,8 @@ createExecutable()
 	executeFile=$2
 	parameterFilter=" --*"	
 	executeFile=${executeFile%%$parameterFilter}
-	echo $executeFile
 	parametermatch="\$#"
 	parameters="\$2"
-	echo $executableName
 	$(touch "$executableName")
 	chmod a+x $executableName
 	echo "#!/bin/sh" >> $executableName
