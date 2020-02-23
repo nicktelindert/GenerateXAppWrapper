@@ -2,7 +2,7 @@
 # Name: GenerateAppWrappers
 # Description: Create App wrapppers for GNUstep/NextSpace
 # Author: Nick te Lindert
-# Version: 0.1
+# Version: 0.3
 # License: GPL2
 
 # Read parameters
@@ -10,7 +10,7 @@ iconDir="/usr/share/icons"
 
 printHelp()
 {
-	echo "GenerateAppswarappers Version: 0.2.2"
+	echo "GenerateAppswarappers Version: 0.3"
 	echo "Parameter list:"
 	echo ""
 	echo "-i	- What is the location of the .desktop files?"
