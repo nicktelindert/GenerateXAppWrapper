@@ -10,11 +10,12 @@ iconDir="/usr/share/icons"
 
 printHelp()
 {
-	echo "GenerateAppswarappers Version: 0.1"
+	echo "GenerateAppswarappers Version: 0.2.2"
 	echo "Parameter list:"
 	echo ""
 	echo "-i	- What is the location of the .desktop files?"
 	echo "-o 	- Where do we place the .app files?"
+	echo "-l 	- Set localization in ISO 639-1 format"
 	exit 1
 }
 
@@ -23,6 +24,7 @@ createAppFolder()
 	name=$1;
 	icon=$2
 	executable=$3;
+	echo "Add $name..."
 	appDir="$outputDir/$name"
 	`rm -rf "$appDir"`
 	`mkdir "$appDir"`
@@ -37,12 +39,16 @@ createAppFolder()
 copyIcon()
 {
 	icon="$1"
-	original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(scalable|512x512|256x256|192x192|128x128|96x96|72x72|64x64|48x48)\/(apps|devices)/$icon.(svg|png|xpm)" -print|head -n 1`
+	original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(scalable|256x256|512x512)\/(apps|devices)/$icon.(svg)" -print|head -n 1`
 	destination="$2"
-	echo $original
-	echo $icon	
-	if [[ -f "$original" ]]; then
-		$(convert "$original" -resize 48x48 -background none "$destination/$icon.tiff")
+	if [[ ! -f "$original" ]]; then
+		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(48x48)\/(apps|devices)/$icon.(png)" -print|head -n 1`
+	else
+		`convert "$original" -resize 48x48 "$destination/$icon.tiff"`
+	fi
+	
+	if [[ -f "$original" ]] && [[ ! -f "$destination/$icon.tiff" ]]; then
+		`convert "$original" "$destination/$icon.tiff"`
 	fi
 }
 
@@ -87,17 +93,24 @@ GenerateApps()
 {
 	echo "Reading .Desktop files from: $inputDir"
 	cd $inputDir
-	DESKTOPFILES="$inputDir/*.desktop"
+	DESKTOPFILES="*.desktop"
 	for f in $DESKTOPFILES; do
+		f="$inputDir/$f"
 		properties="Name=,Exec=,Icon="
+		if  [ "$locale" != "" ]; then
+			if [[ -n `grep -s -m1 "^Name[\fr]=" "$f"` ]]; 
+			then
+				properties="Name\[$locale]=,Exec=,Icon="
+			fi
+		fi
 		Field_Separator=$IFS
-		noDisplay="$(grep -w 'NoDisplay=true' $f)"
-		isTerminal="$(grep -w 'Terminal=true' $f)"
-		if [ -z $isTerminal ] && [ -z $noDisplay ]; then
+		noDisplay=`grep -m1 -s "^NoDisplay=true" "$f"`
+		isTerminal=`grep -m1 -s "^Terminal=true" "$f"`
+		if [ -z $noDisplay ] && [ -z $isTerminal ]; then
 			INDEX=0
 			IFS=,
 			for prop in $properties; do
-				rawVariable="$(grep -m1 ^$prop $f)"
+				rawVariable=`grep -s -m1 "^$prop" "$f"`
 				applicationdata[$INDEX]=`echo ${rawVariable#$prop}`
 				((INDEX++))
 			done
@@ -120,10 +133,12 @@ GenerateApps()
 #Main loop
 inputDir=""
 outputDir=""
-while getopts "i:o:" opt; do
+locale=""
+while getopts "i:o:l:" opt; do
 	case $opt in
 		i ) inputDir=$OPTARG ;;
 		o ) outputDir=$OPTARG ;;
+		l ) locale=$OPTARG ;;
 		? ) printHelp ;;
 	esac
 done
