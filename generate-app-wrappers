@@ -104,9 +104,8 @@ GenerateApps()
 			fi
 		fi
 		Field_Separator=$IFS
-		noDisplay=`grep -m1 -s "^NoDisplay=true" "$f"`
 		isTerminal=`grep -m1 -s "^Terminal=true" "$f"`
-		if [ -z $noDisplay ] && [ -z $isTerminal ]; then
+		if [ -z $isTerminal ]; then
 			INDEX=0
 			IFS=,
 			for prop in $properties; do
