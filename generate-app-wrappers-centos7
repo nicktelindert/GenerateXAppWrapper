@@ -43,7 +43,7 @@ copyIcon()
 	destination="$2"
 	
 	if [[ -f "$original" ]] && [[ ! -f "$destination/$icon.tiff" ]]; then
-		`convert "$original" "$destination/$icon.tiff"`
+		`convert "$original" -resize 48x48 "$destination/$icon.tiff"`
 	fi
 }
 
