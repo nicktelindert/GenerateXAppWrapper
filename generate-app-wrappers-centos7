@@ -39,11 +39,15 @@ createAppFolder()
 copyIcon()
 {
 	icon="$1"
-	original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(scalable|64x64|128x128|192x192|256x256|512x512)\/(apps|devices)/$icon.png" -print|head -n 1`
-	destination="$2"
+	count=`find /usr/share/icons -name "$icon.png"| wc -l`
 	
-	if [[ -f "$original" ]] && [[ ! -f "$destination/$icon.tiff" ]]; then
-		`convert "$original" -resize 48x48 "$destination/$icon.tiff"`
+	if [ $count != 0 ]; then
+		original=`find /usr/share/icons -regextype gnu-awk -regex ".*\/(scalable|64x64|128x128|192x192|256x256|512x512)\/(apps|devices)/$icon.png" -print|head -n 1`
+		destination="$2"
+
+		if [[ -f "$original" ]] && [[ ! -f "$destination/$icon.tiff" ]]; then
+			`convert "$original" -resize 48x48 "$destination/$icon.tiff"`
+		fi
 	fi
 }
 
