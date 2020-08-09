@@ -10,7 +10,7 @@ iconDir="/usr/share/icons"
 
 printHelp()
 {
-	echo "GenerateAppswarappers Version: 0.3"
+	echo "GenerateAppswarappers Version: 0.3.1"
 	echo "Parameter list:"
 	echo ""
 	echo "-i	- What is the location of the .desktop files?"
@@ -147,4 +147,5 @@ if [ -z "$inputDir" ] || [ -z "$outputDir" ]; then
 	printHelp	
 else
 	GenerateApps
+	chmod -R 755 /Applications/
 fi
